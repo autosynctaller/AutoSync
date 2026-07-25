@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id        String     @id @default(cuid())
+  nombre    String
+  telefono  String
+  email     String?
+  direccion String?
+  vehiculos Vehiculo[]
+  createdAt DateTime   @default(now())
+}
+
+model Vehiculo {
+  id                     String            @id @default(cuid())
+  marca                  String
+  modelo                 String
+  anio                   Int
+  patente                String            @unique
+  color                  String?
+  kilometraje            Int?
+  tipo                   String            // Auto, Camioneta, Moto, Utilitario
+  combustible            String?           // Nafta, Diesel, GNC, Eléctrico, Híbrido
+  notas                  String?           // Notas visibles para el cliente
+  notasInternas          String?           // Notas SOLO para el taller (no visibles para el cliente)
+  notasActualizadasEn    DateTime?         // Última vez que el cliente actualizó sus notas (para avisar al taller)
+  vtvVencimiento         DateTime?         // Fecha de vencimiento de la VTV
+  gncVencimiento         DateTime?         // Fecha de vencimiento de la obleta GNC (solo si es GNC)
+  clienteId              String
+  cliente                Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  trabajos               Trabajo[]
+  fotos                  FotoVehiculo[]
+  documentos             DocumentoVehiculo[]
+  diagnosticos           Diagnostico[]
+  createdAt              DateTime          @default(now())
+}
+
+model Trabajo {
+  id               String    @id @default(cuid())
+  vehiculoId       String
+  vehiculo         Vehiculo  @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  servicioId       String?
+  servicio         Servicio? @relation(fields: [servicioId], references: [id])
+  titulo           String
+  descripcion      String
+  precio           Float
+  estado           String    // Pendiente, En proceso, Completado
+  fecha            DateTime  @default(now())
+  kilometraje      Int?      // KM del vehículo al momento del trabajo
+  proximo          String?   // Texto libre: "A los 90.000 km" o "en 6 meses"
+  recordatorio     DateTime? // Fecha exacta en la que se debe enviar recordatorio
+  notasInternas    String?   // Notas SOLO para el taller (no visibles para el cliente)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Servicio {
+  id          String    @id @default(cuid())
+  nombre      String
+  descripcion String
+  precioBase  Float?   // Opcional - los precios se manejan por trabajo, no por catálogo público
+  categoria   String
+  icono       String?
+  destacado   Boolean   @default(false)
+  activo      Boolean   @default(true)
+  trabajos    Trabajo[]
+  createdAt   DateTime  @default(now())
+}
+
+model FotoVehiculo {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  url         String   // Ruta relativa /uploads/vehiculos/...
+  descripcion String?
+  esPrivada   Boolean  @default(false) // Si es true, solo la ve el admin
+  categoria   String   @default("general") // general, dano, repuesto, trabajo_terminado
+  createdAt   DateTime @default(now())
+}
+
+model DocumentoVehiculo {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  url         String   // Ruta relativa /uploads/documentos/...
+  nombre      String   // Nombre original del archivo
+  tipo        String   // MIME type (ej: application/pdf)
+  tamaño      Int      // Tamaño en bytes
+  descripcion String?
+  createdAt   DateTime @default(now())
+}
+
+// Cronograma de services por marca/modelo (solo admin lo ve y gestiona)
+// Si modelo es "Genérico", aplica a todos los modelos de esa marca
+model CronogramaService {
+  id          String   @id @default(cuid())
+  marca       String   // Ej: Toyota, Ford, VW, Chevrolet, etc.
+  modelo      String   // Ej: Corolla, Hilux, o "Genérico" para toda la marca
+  kilometraje Int      // Cada cuántos km se hace el service (ej: 10000)
+  items       String   // Lista de items a revisar, separados por salto de línea
+  notas       String?  // Observaciones adicionales del fabricante
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Diagnóstico técnico de un vehículo (solo admin lo ve)
+// Permite registrar síntomas, pruebas, diagnóstico y solución
+model Diagnostico {
+  id               String   @id @default(cuid())
+  vehiculoId       String
+  vehiculo         Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  titulo           String   // Título corto del problema (ej: "Ruido al frenar")
+  sintoma          String   // Síntoma informado por el cliente o detectado
+  pruebasRealizadas String? // Pruebas realizadas para diagnosticar
+  resultadoPrueba  String?  // Resultado de las pruebas
+  diagnostico      String?  // Diagnóstico técnico final
+  solucion         String?  // Solución aplicada
+  resultadoFinal   String?  // Resultado después de la solución
+  estado           String   @default("En diagnóstico") // En diagnóstico, Resuelto, Pendiente repuesto, Sin solución
+  kilometraje      Int?     // KM del vehículo al momento del diagnóstico
+  fecha            DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

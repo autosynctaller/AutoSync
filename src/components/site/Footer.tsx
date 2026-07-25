@@ -1,0 +1,88 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Lock, MapPin, Phone, Clock } from 'lucide-react'
+import { AdminPanel } from './AdminPanel'
+
+const WHATSAPP = '2235941522'
+
+export function Footer() {
+  const [adminOpen, setAdminOpen] = useState(false)
+
+  return (
+    <footer className="mt-auto bg-zinc-950 text-zinc-300">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid gap-8 md:grid-cols-3 lg:grid-cols-4">
+          {/* Marca */}
+          <div className="lg:col-span-2">
+            <img
+              src="/logo-autosync-light.png"
+              alt="AutoSync - Centro Integral Automotriz"
+              className="mb-4 h-14 w-auto"
+            />
+            <p className="max-w-md text-sm text-zinc-400">
+              Taller mecánico en Mar del Plata. Servicio automotor integral
+              con garantía escrita y atención personalizada.
+            </p>
+          </div>
+
+          {/* Contacto rápido */}
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Contacto
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>Falucho 4657, Mar del Plata</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="h-4 w-4 shrink-0 text-primary" />
+                <a
+                  href={`tel:+549${WHATSAPP}`}
+                  className="hover:text-white"
+                >
+                  (0223) 594-1522
+                </a>
+              </li>
+              <li className="flex items-start gap-2">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>L-V 9-18 · Sáb 9-13</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Acceso */}
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Acceso interno
+            </p>
+            <p className="mb-3 text-xs text-zinc-500">
+              Si sos del taller, accedé al panel de administración.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAdminOpen(true)}
+              className="border-zinc-700 bg-transparent text-zinc-200 hover:bg-zinc-800 hover:text-white"
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              Panel admin
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-zinc-800 pt-6 text-xs text-zinc-500 sm:flex-row">
+          <p>
+            © {new Date().getFullYear()} AutoSync · Todos los derechos
+            reservados.
+          </p>
+          <p>Hecho con dedicación para los marplatenses.</p>
+        </div>
+      </div>
+
+      <AdminPanel open={adminOpen} onOpenChange={setAdminOpen} />
+    </footer>
+  )
+}
